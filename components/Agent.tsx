@@ -117,21 +117,19 @@ const Agent = ({
 const handleCall = async () => {
     setCallStatus(CallStatus.CONNECTING);
 
-    if (type === "generate") {
-      await vapi.start(
-        interviewer,
-        {
-          variableValues: {
-            username: userName,
-            userid: userId,
-          },
-          clientMessages: ["transcript"],
-          serverMessages: [],
-        },
-        undefined,
-        generator
-      );
-    } else {
+   if (type === "generate") {
+  await vapi.start(
+    generator, 
+    {
+      variableValues: {
+        username: userName,
+        userid: userId,
+      },
+      clientMessages: ["transcript"],
+      serverMessages: [],
+    }
+  );
+} else {
       let formattedQuestions = "";
       if (questions) {
         formattedQuestions = questions
