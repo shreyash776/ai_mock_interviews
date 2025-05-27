@@ -119,7 +119,7 @@ const handleCall = async () => {
 
     if (type === "generate") {
       await vapi.start(
-        undefined,
+        interviewer,
         {
           variableValues: {
             username: userName,
