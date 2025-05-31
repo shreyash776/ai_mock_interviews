@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect,useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import { vapi } from "@/lib/vapi.sdk";
-import { generator, interviewer } from "@/constants";
+import { generator, interviewer,generatorAssistant } from "@/constants";
 import { createFeedback } from "@/lib/actions/general.action";
 
 enum CallStatus {
@@ -21,6 +21,27 @@ interface SavedMessage {
   content: string;
 }
 
+function extractInterviewData(messages: SavedMessage[]) {
+  const transcript = messages.map(m => m.content).join(" ");
+
+  // More flexible regex patterns
+  const roleMatch = transcript.match(/role(?: is|:)?\s*([a-zA-Z0-9\s]+)/i);
+  const levelMatch = transcript.match(/(?:level|experience level)(?: is|:)?\s*([a-zA-Z]+)/i);
+  const techstackMatch = transcript.match(/(?:tech(?: stack)?|technologies)(?: is| are|:)?\s*([a-zA-Z0-9,.\s]+)/i);
+  const typeMatch = transcript.match(/(?:type(?: of interview)?)(?: is|:)?\s*([a-zA-Z]+)/i);
+  const amountMatch = transcript.match(/(?:amount|number|how many questions)(?: is|:)?\s*(\d+)/i);
+
+  return {
+    role: roleMatch ? roleMatch[1].trim() : "",
+    level: levelMatch ? levelMatch[1].trim() : "",
+    techstack: techstackMatch ? techstackMatch[1].trim() : "",
+    type: typeMatch ? typeMatch[1].trim() : "",
+    amount: amountMatch ? parseInt(amountMatch[1]) : 3,
+  };
+}
+
+
+
 const Agent = ({
   userName,
   userId,
@@ -32,9 +53,12 @@ const Agent = ({
   const router = useRouter();
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
   const [messages, setMessages] = useState<SavedMessage[]>([]);
+  const messagesRef = useRef<SavedMessage[]>([]);
+messagesRef.current = messages;
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>("");
 
+  
   useEffect(() => {
     const onCallStart = () => {
       setCallStatus(CallStatus.ACTIVE);
@@ -114,24 +138,60 @@ const Agent = ({
     }
   }, [messages, callStatus, feedbackId, interviewId, router, type, userId]);
 
-const handleCall = async () => {
-    setCallStatus(CallStatus.CONNECTING);
 
+ useEffect(() => {
+  const onCallEnd = async () => {
+    setCallStatus(CallStatus.FINISHED);
+
+    // Use a ref to always get the latest messages
+    const interviewData = extractInterviewData(messagesRef.current);
+    const payload = {
+      ...interviewData,
+      userid: userId,
+    };
+
+    console.log("Extracted data:", payload);
+
+    if (
+      payload.role &&
+      payload.level &&
+      payload.techstack &&
+      payload.type &&
+      payload.amount
+    ) {
+      await fetch("/api/vapi/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    }
+  };
+
+  vapi.on("call-end", onCallEnd);
+
+  return () => {
+    vapi.off("call-end", onCallEnd);
+  };
+}, [userId]);
+
+
+
+const handleCall = async () => {
+
+  console.log("userId being sent:", userId);
+
+    setCallStatus(CallStatus.CONNECTING);
     if (type === "generate") {
-     await vapi.start(
-        undefined,
-        {
-          variableValues: {
-            username: userName,
-            userid: userId,
-          },
-          clientMessages: ["transcript"],
-          serverMessages: [],
-        },
-         undefined,
-        generator
-      );
-    } else {
+    // Use the prompt-based assistant, not the workflow
+    await vapi.start(generatorAssistant, {
+      variableValues: {
+        username: userName,
+        userid: userId,
+      },
+      clientMessages: ["transcript"],
+      serverMessages: [],
+    });
+  } else {
       let formattedQuestions = "";
       if (questions) {
         formattedQuestions = questions
@@ -149,10 +209,53 @@ const handleCall = async () => {
     }
   };
 
-  const handleDisconnect = () => {
-    setCallStatus(CallStatus.FINISHED);
-    vapi.stop();
-  };
+//  const handleDisconnect = async () => {
+
+//   setCallStatus(CallStatus.FINISHED);
+//   vapi.stop();
+   
+//   console.log("Disconnecting from call...");
+//   // console message
+//   console.log("Messages before extraction:", messages);
+//   // Extract interview data from messages
+//   if (messages.length === 0) {
+//     console.warn("No messages to extract interview data from.");
+//     return;
+//   }
+//   // console extracted interviewdata
+  
+
+//   const interviewData =await extractInterviewData(messages);
+//   const payload = {
+//     ...interviewData,
+//     userid: userId,
+//   };
+//   console.log("Messages before extraction:", interviewData);
+
+    
+//   console.log("Extracted interview data:", payload);
+  
+//   if (
+//     payload.role &&
+//     payload.level &&
+//     payload.techstack &&
+//     payload.type &&
+//     payload.amount
+//   ) {
+//     await fetch("http://localhost:3000/api/vapi/generate", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify(payload),
+//     });
+//   } else {
+//     console.warn("Not all interview data extracted:", payload);
+//   }
+// };
+
+const handleDisconnect = () => {
+  vapi.stop();
+};
+
 
   return (
     <>

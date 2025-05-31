@@ -1,6 +1,36 @@
 import { CreateAssistantDTO, CreateWorkflowDTO } from "@vapi-ai/web/dist/api";
 import { z } from "zod";
 
+export const generatorAssistant = {
+  name: "Interview Generator",
+  firstMessage: "Hi! I’ll help you set up an AI interview. I’ll ask you a few questions about the role, experience level, tech stack, and the type of interview. Let’s get started!",
+  transcriber: { provider: "deepgram", model: "nova-2", language: "en" },
+  voice: { provider: "11labs", voiceId: "sarah" },
+  model: {
+    provider: "openai",
+    model: "gpt-4",
+    messages: [
+      {
+        role: "system",
+        content: `
+You are an assistant that helps users set up an AI job interview. Ask the following questions, one at a time, and wait for the user's answer before moving to the next:
+1. What is the job role?
+2. What is the experience level? (entry, mid, senior)
+3. What technologies should the interview cover?
+4. What type of interview is this? (technical, behavioural, mixed)
+5. How many questions should be generated?
+
+At the end, thank the user and confirm their choices.
+Keep your responses short and conversational.
+        `,
+      },
+    ],
+  },
+};
+
+
+
+
 export const generator : CreateWorkflowDTO = {
   name: "Generate Interview",
   nodes: [
@@ -15,7 +45,7 @@ export const generator : CreateWorkflowDTO = {
         },
       },
       prompt:
-        "Speak first. Greet the user and help them create a new AI Interviewer",
+        "Speak first. Greet the user and help them create a new AI Interviewer", 
       voice: {
         model: "aura-2",
         voiceId: "thalia",
@@ -68,7 +98,9 @@ export const generator : CreateWorkflowDTO = {
         },
       },
       method: "POST",
-      url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/vapi/generate`,
+      // url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/vapi/generate`,
+      url: `http://localhost:3000/api/vapi/generate`,
+
       headers: {
         type: "object",
         properties: {},

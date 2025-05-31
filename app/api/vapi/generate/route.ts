@@ -5,7 +5,13 @@ import { db } from "@/firebase/admin";
 import { getRandomInterviewCover } from "@/lib/utils";
 
 export async function POST(request: Request) {
-  const { type, role, level, techstack, amount, userid } = await request.json();
+  // const { type, role, level, techstack, amount, userid } = await request.json();
+  const body = await request.json();
+  console.log("API received body:", body); 
+
+  // Destructure after logging for clarity
+  const { type, role, level, techstack, amount, userid } = body;
+  
 
   try {
     const { text: questions } = await generateText({
