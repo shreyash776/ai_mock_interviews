@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { vapi } from "@/lib/vapi.sdk";
 import { interviewer,generatorAssistant } from "@/constants";
 import { createFeedback } from "@/lib/actions/general.action";
-import { extractInterviewData } from "@/utils/extractInterviewData";
+// import { extractInterviewData } from "@/utils/extractInterviewData";
 
 
 enum CallStatus {
@@ -146,7 +146,13 @@ messagesRef.current = messages;
     setCallStatus(CallStatus.FINISHED);
 
     // Use a ref to always get the latest messages
-      const interviewData = await extractInterviewData(messagesRef.current);
+      // const interviewData = await extractInterviewData(messagesRef.current);
+      const response = await fetch("/api/extract-interview-data", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ messages: messagesRef.current }),
+});
+const interviewData = await response.json();
     const payload = {
       ...interviewData,
       userid: userId,
@@ -211,48 +217,6 @@ const handleCall = async () => {
     }
   };
 
-//  const handleDisconnect = async () => {
-
-//   setCallStatus(CallStatus.FINISHED);
-//   vapi.stop();
-   
-//   console.log("Disconnecting from call...");
-//   // console message
-//   console.log("Messages before extraction:", messages);
-//   // Extract interview data from messages
-//   if (messages.length === 0) {
-//     console.warn("No messages to extract interview data from.");
-//     return;
-//   }
-//   // console extracted interviewdata
-  
-
-//   const interviewData =await extractInterviewData(messages);
-//   const payload = {
-//     ...interviewData,
-//     userid: userId,
-//   };
-//   console.log("Messages before extraction:", interviewData);
-
-    
-//   console.log("Extracted interview data:", payload);
-  
-//   if (
-//     payload.role &&
-//     payload.level &&
-//     payload.techstack &&
-//     payload.type &&
-//     payload.amount
-//   ) {
-//     await fetch("http://localhost:3000/api/vapi/generate", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify(payload),
-//     });
-//   } else {
-//     console.warn("Not all interview data extracted:", payload);
-//   }
-// };
 
 const handleDisconnect = () => {
   vapi.stop();
