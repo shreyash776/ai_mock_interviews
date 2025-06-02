@@ -4,7 +4,7 @@ import { google } from "@ai-sdk/google";
 
 export async function POST(request: NextRequest) {
   const { messages } = await request.json();
-  const transcript = messages.map((m: { content: string }) => m.content).join(" ");
+  const transcript = messages.map((m) => m.content).join(" ");
 
   const prompt = `
 Extract the following fields from this transcript:
@@ -17,7 +17,8 @@ Extract the following fields from this transcript:
 Transcript:
 ${transcript}
 
-Return as a JSON object with keys: role, level, techstack, type, amount.
+Return ONLY a valid JSON object, with no extra text, formatted exactly like:
+{"role": "...", "level": "...", "techstack": "...", "type": "...", "amount": 3}
 `;
 
   try {
@@ -26,22 +27,28 @@ Return as a JSON object with keys: role, level, techstack, type, amount.
       prompt,
     });
 
-    const data = JSON.parse(text);
-    return NextResponse.json({
+    // Extract the first JSON object from the response
+    const jsonMatch = text.match(/{[\s\S]*}/);
+    const data = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+
+    const responseData = {
       role: data.role || "",
       level: data.level || "",
       techstack: data.techstack || "",
       type: data.type || "",
       amount: Number(data.amount) || 3,
-    });
+    };
+
+    return NextResponse.json(responseData);
   } catch (err) {
     console.error("Failed to parse interview data:", err);
-    return NextResponse.json({
+    const fallbackData = {
       role: "frontend",
       level: "entry",
       techstack: "react,typescript",
       type: "technical",
       amount: 3,
-    });
+    };
+    return NextResponse.json(fallbackData);
   }
 }
