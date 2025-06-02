@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import { vapi } from "@/lib/vapi.sdk";
-import { generator, interviewer,generatorAssistant } from "@/constants";
+import { interviewer,generatorAssistant } from "@/constants";
 import { createFeedback } from "@/lib/actions/general.action";
+import { extractInterviewData } from "@/utils/extractInterviewData";
+
 
 enum CallStatus {
   INACTIVE = "INACTIVE",
@@ -21,24 +23,24 @@ interface SavedMessage {
   content: string;
 }
 
-function extractInterviewData(messages: SavedMessage[]) {
-  const transcript = messages.map(m => m.content).join(" ");
+// function extractInterviewData(messages: SavedMessage[]) {
+//   const transcript = messages.map(m => m.content).join(" ");
 
-  // More flexible regex patterns
-  const roleMatch = transcript.match(/role(?: is|:)?\s*([a-zA-Z0-9\s]+)/i);
-  const levelMatch = transcript.match(/(?:level|experience level)(?: is|:)?\s*([a-zA-Z]+)/i);
-  const techstackMatch = transcript.match(/(?:tech(?: stack)?|technologies)(?: is| are|:)?\s*([a-zA-Z0-9,.\s]+)/i);
-  const typeMatch = transcript.match(/(?:type(?: of interview)?)(?: is|:)?\s*([a-zA-Z]+)/i);
-  const amountMatch = transcript.match(/(?:amount|number|how many questions)(?: is|:)?\s*(\d+)/i);
+//   // More flexible regex patterns
+//   const roleMatch = transcript.match(/role(?: is|:)?\s*([a-zA-Z0-9\s]+)/i);
+//   const levelMatch = transcript.match(/(?:level|experience level)(?: is|:)?\s*([a-zA-Z]+)/i);
+//   const techstackMatch = transcript.match(/(?:tech(?: stack)?|technologies)(?: is| are|:)?\s*([a-zA-Z0-9,.\s]+)/i);
+//   const typeMatch = transcript.match(/(?:type(?: of interview)?)(?: is|:)?\s*([a-zA-Z]+)/i);
+//   const amountMatch = transcript.match(/(?:amount|number|how many questions)(?: is|:)?\s*(\d+)/i);
 
-  return {
-    role: roleMatch ? roleMatch[1].trim() : "",
-    level: levelMatch ? levelMatch[1].trim() : "",
-    techstack: techstackMatch ? techstackMatch[1].trim() : "",
-    type: typeMatch ? typeMatch[1].trim() : "",
-    amount: amountMatch ? parseInt(amountMatch[1]) : 3,
-  };
-}
+//   return {
+//     role: roleMatch ? roleMatch[1].trim() : "",
+//     level: levelMatch ? levelMatch[1].trim() : "",
+//     techstack: techstackMatch ? techstackMatch[1].trim() : "",
+//     type: typeMatch ? typeMatch[1].trim() : "",
+//     amount: amountMatch ? parseInt(amountMatch[1]) : 3,
+//   };
+// }
 
 
 
@@ -144,7 +146,7 @@ messagesRef.current = messages;
     setCallStatus(CallStatus.FINISHED);
 
     // Use a ref to always get the latest messages
-    const interviewData = extractInterviewData(messagesRef.current);
+      const interviewData = await extractInterviewData(messagesRef.current);
     const payload = {
       ...interviewData,
       userid: userId,

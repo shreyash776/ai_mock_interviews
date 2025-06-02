@@ -1,19 +1,10 @@
+import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
 
-/**
- * Uses Gemini to extract interview data from a transcript.
- * @param messages - Array of message objects with { content }
- * @returns Promise resolving to { role, level, techstack, type, amount }
- */
-export async function extractInterviewData(messages: { content: string }[]): Promise<{
-  role: string;
-  level: string;
-  techstack: string;
-  type: string;
-  amount: number;
-}> {
-  const transcript = messages.map(m => m.content).join(" ");
+export async function POST(request: NextRequest) {
+  const { messages } = await request.json();
+  const transcript = messages.map((m: { content: string }) => m.content).join(" ");
 
   const prompt = `
 Extract the following fields from this transcript:
@@ -36,22 +27,21 @@ Return as a JSON object with keys: role, level, techstack, type, amount.
     });
 
     const data = JSON.parse(text);
-    return {
+    return NextResponse.json({
       role: data.role || "",
       level: data.level || "",
       techstack: data.techstack || "",
       type: data.type || "",
       amount: Number(data.amount) || 3,
-    };
+    });
   } catch (err) {
     console.error("Failed to parse interview data:", err);
-    // Standard fallback values
-    return {
+    return NextResponse.json({
       role: "frontend",
       level: "entry",
       techstack: "react,typescript",
       type: "technical",
       amount: 3,
-    };
+    });
   }
 }
