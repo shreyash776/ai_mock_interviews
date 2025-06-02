@@ -78,17 +78,17 @@ messagesRef.current = messages;
     };
 
     const onSpeechStart = () => {
-      console.log("speech start");
+      // console.log("speech start");
       setIsSpeaking(true);
     };
 
     const onSpeechEnd = () => {
-      console.log("speech end");
+      // console.log("speech end");
       setIsSpeaking(false);
     };
 
     const onError = (error: Error) => {
-      console.log("Error:", error);
+      // console.log("Error:", error);
     };
 
     vapi.on("call-start", onCallStart);
@@ -114,7 +114,7 @@ messagesRef.current = messages;
     }
 
     const handleGenerateFeedback = async (messages: SavedMessage[]) => {
-      console.log("handleGenerateFeedback");
+      // console.log("handleGenerateFeedback");
 
       const { success, feedbackId: id } = await createFeedback({
         interviewId: interviewId!,
@@ -126,7 +126,7 @@ messagesRef.current = messages;
       if (success && id) {
         router.push(`/interview/${interviewId}/feedback`);
       } else {
-        console.log("Error saving feedback");
+        // console.log("Error saving feedback");
         router.push("/");
       }
     };
@@ -158,7 +158,7 @@ const interviewData = await response.json();
       userid: userId,
     };
 
-    console.log("Extracted data:", payload);
+    // console.log("Extracted data:", payload);
 
     if (
       payload.role &&
@@ -186,7 +186,7 @@ const interviewData = await response.json();
 
 const handleCall = async () => {
 
-  console.log("userId being sent:", userId);
+  // console.log("userId being sent:", userId);
 
     setCallStatus(CallStatus.CONNECTING);
     if (type === "generate") {

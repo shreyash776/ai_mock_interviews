@@ -41,7 +41,7 @@ Return ONLY a valid JSON object, with no extra text, formatted exactly like:
 
     return NextResponse.json(responseData);
   } catch (err) {
-    console.error("Failed to parse interview data:", err);
+    // console.error("Failed to parse interview data:", err);
     const fallbackData = {
       role: "frontend",
       level: "entry",
